@@ -8,9 +8,8 @@
         <groupId>com.itgirl</groupId>
         <artifactId>activation-system</artifactId>
         <version>1.0.0</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath/>  <!-- This is correct -->
     </parent>
-
 
     <dependencies>
         <dependency>

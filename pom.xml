@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.itgirl</groupId>
-    <artifactId>activation-service</artifactId>  <!-- This must match -->
+    <artifactId>activation-service</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
 

@@ -1,6 +1,6 @@
 package com.itgirl.usercore.service;
 
-import com.itgirl.usercore.dto.UserDto;
+import com.itgirl.usercore.dto.UserCreateRequest;
 import com.itgirl.usercore.model.User;
 import com.itgirl.usercore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +18,14 @@ public class UserService {
     private final RedisTemplate<String, String> redisTemplate;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public void register(UserDto userDto) {
+    public void register(UserCreateRequest userCreateRequest) {
         UUID userId = UUID.randomUUID();
 
         User user = new User();
         user.setId(userId);
-        user.setName(userDto.getName());
-        user.setSurname(userDto.getSurname());
-        user.setEmail(userDto.getEmail());
+        user.setName(userCreateRequest.name());
+        user.setSurname(userCreateRequest.surname());
+        user.setEmail(userCreateRequest.email());
         user.setEnabled(false);
 
         userRepository.save(user);

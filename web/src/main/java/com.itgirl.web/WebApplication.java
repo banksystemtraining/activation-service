@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableCaching
-@EnableFeignClients(basePackages = "com.itgirl.usercore.client")
+@EnableFeignClients(basePackages = {"com.itgirl.web.client", "com.itgirl.usercore.client"})
 public class WebApplication {
     public static void main(String[] args) {
         SpringApplication.run(WebApplication.class, args);

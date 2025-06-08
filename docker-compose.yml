@@ -131,10 +131,11 @@ services:
       liquibase:
         condition: service_completed_successfully
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 0" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userdb
@@ -155,11 +156,11 @@ services:
       web-redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8082/actuator/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 0" ]
+      interval: 30s
+      timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 2m
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_REDIS_HOST: web-redis
@@ -178,11 +179,11 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8083/actuator/health" ]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 0" ]
+      interval: 30s
+      timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 2m
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092

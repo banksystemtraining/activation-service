@@ -107,8 +107,8 @@ services:
     environment:
       LIQUIBASE_DRIVER: org.postgresql.Driver
       LIQUIBASE_URL: jdbc:postgresql://postgres:5432/userdb
-      LIQUIBASE_USERNAME: user
-      LIQUIBASE_PASSWORD: password
+      LIQUIBASE_USERNAME: as_user
+      LIQUIBASE_PASSWORD: 12345
       LIQUIBASE_CHANGELOG_FILE: changelog-master.xml
       LIQUIBASE_CONTEXTS: dev
     networks:
@@ -135,11 +135,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 120s
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userdb
       SPRING_REDIS_HOST: user-core-redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     networks:
       - backend
 
@@ -168,6 +169,21 @@ services:
     networks:
       - backend
 
+  notification-redis:
+    image: redis:7
+    container_name: notification_redis
+    restart: unless-stopped
+    ports:
+      - "36379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend
+
   notification-service:
     build:
       context: ./notification-service
@@ -178,6 +194,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      notification-redis:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 0" ]
       interval: 30s
@@ -185,16 +203,11 @@ services:
       retries: 5
       start_period: 2m
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_MAIL_HOST: mailhog
-      SPRING_MAIL_PORT: 1025
-      SPRING_MAIL_USERNAME: ""
-      SPRING_MAIL_PASSWORD: ""
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "false"
-      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
     networks:
       - backend
+      - kafka-net
 
   mailhog:
     image: mailhog/mailhog

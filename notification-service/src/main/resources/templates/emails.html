@@ -2,27 +2,55 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Email Logs</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="container mt-4">
-<h2>Email Logs</h2>
-<table class="table table-bordered">
-    <thead>
-    <tr>
-        <th>Email</th>
-        <th>Activation Key</th>
-        <th>Status</th>
-        <th>Time</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="log : ${logs}">
-        <td th:text="${log.email}">Email</td>
-        <td th:text="${log.activationKey}">Key</td>
-        <td th:text="${log.success}">Success</td>
-        <td th:text="${log.timestamp}">Time</td>
-    </tr>
-    </tbody>
-</table>
+<body>
+<div class="container my-5">
+    <h1 class="mb-4">Email Logs</h1>
+
+    <form method="get" action="/emails" class="row g-3 mb-4">
+        <div class="col-md-6">
+            <input type="text" name="search" placeholder="Search emails..." th:value="${param.search}" class="form-control">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="/emails" class="btn btn-secondary ms-2">Clear</a>
+        </div>
+    </form>
+
+    <div th:if="${message}" class="alert alert-warning" role="alert" th:text="${message}"></div>
+
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Email Log Entry</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="log, iterStat : ${emails}">
+            <td th:text="${iterStat.index + 1}"></td>
+            <td th:text="${log}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav th:if="${totalPages > 1}" aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                <a class="page-link" th:href="@{/emails(search=${param.search}, page=${currentPage - 1})}" tabindex="-1">Previous</a>
+            </li>
+            <li class="page-item" th:each="pageNum : ${#numbers.sequence(1, totalPages)}"
+                th:classappend="${pageNum == currentPage} ? 'active'">
+                <a class="page-link" th:href="@{/emails(search=${param.search}, page=${pageNum})}" th:text="${pageNum}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                <a class="page-link" th:href="@{/emails(search=${param.search}, page=${currentPage + 1})}">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

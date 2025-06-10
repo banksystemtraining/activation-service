@@ -1,51 +1,58 @@
 package com.itgirl.usercore.service;
 
-import com.itgirl.usercore.dto.UserCreateRequest;
+import com.itgirl.common.ActivationMessage;
+import com.itgirl.usercore.kafka.ActivationProducer;
 import com.itgirl.usercore.model.User;
 import com.itgirl.usercore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserRepository userRepository;
-    private final RedisTemplate<String, String> redisTemplate;
-    private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public void register(UserCreateRequest userCreateRequest) {
-        UUID userId = UUID.randomUUID();
+    private final UserRepository repository;
+    private final ActivationProducer activationProducer;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-        User user = new User();
-        user.setId(userId);
-        user.setName(userCreateRequest.name());
-        user.setSurname(userCreateRequest.surname());
-        user.setEmail(userCreateRequest.email());
-        user.setEnabled(false);
-
-        userRepository.save(user);
-
+    public void registerUser(String name, String email, String password) {
         String activationKey = UUID.randomUUID().toString();
-        redisTemplate.opsForValue().set(activationKey, userId.toString(), Duration.ofHours(1));
 
-        kafkaTemplate.send("user-activation", userId.toString());
+        ActivationMessage message = new ActivationMessage(
+                email,
+                name,
+                password,
+                activationKey
+        );
+
+        activationProducer.sendActivationMessage(message);
     }
 
-    public boolean activate(String key) {
-        String userIdStr = redisTemplate.opsForValue().get(key);
-        if (userIdStr == null) return false;
+    public void activateUserByKey(String activationKey) {
+        Optional<User> userOpt = repository.findByActivationKey(activationKey);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setActive(true);
+            user.setActivationKey(null); // clear
+            repository.save(user);
+        } else {
+            throw new IllegalArgumentException("Invalid activation key");
+        }
+    }
 
-        UUID userId = UUID.fromString(userIdStr);
-        return userRepository.findById(userId).map(user -> {
-            user.setEnabled(true);
-            userRepository.save(user);
-            redisTemplate.delete(key);
-            return true;
-        }).orElse(false);
+    public void saveActivatedUser(ActivationMessage message) {
+        User user = new User();
+        user.setEmail(message.getEmail());
+        user.setName(message.getName());
+        user.setPassword(passwordEncoder.encode(message.getPassword()));
+        user.setActivationKey(message.getActivationKey());
+        user.setActive(false);
+        user.setCreatedAt(Instant.now());
+        repository.save(user);
     }
 }

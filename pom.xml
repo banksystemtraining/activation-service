@@ -25,6 +25,7 @@
         <module>user-core</module>
         <module>web</module>
         <module>notification-service</module>
+        <module>common</module>
     </modules>
 
     <dependencies>

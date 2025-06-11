@@ -1,10 +1,11 @@
 package com.itgirl.notificationservice.service;
 
+import com.itgirl.common.ActivationMessage;
 import com.itgirl.notificationservice.log.EmailSendException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,17 +17,32 @@ public class NotificationSender {
     private final EmailLogService emailLogService;
 
     public void sendActivationEmail(String email, String activationKey) {
+        String content = "Your activation key is: " + activationKey;
+        sendEmail(email, "Activation Email", content);
+    }
+
+    public void sendRegistrationEmail(ActivationMessage message) {
+        String activationUrl = "https://yourapp.com/activate?key=" + message.getActivationKey();
+        String content = "Welcome " + message.getName() + "! Click the link to activate your account:\n" + activationUrl;
+        sendEmail(message.getEmail(), "Activate your account", content);
+    }
+
+    private void sendEmail(String email, String subject, String content) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
-        message.setSubject("Activation Email");
-        message.setText("Your activation key is: " + activationKey);
+        message.setSubject(subject);
+        message.setText(content);
 
         try {
             mailSender.send(message);
-            emailLogService.logEmail(email, message.getText());
+            emailLogService.logEmail(email, content);
         } catch (Exception e) {
-            log.error("Failed to send email", e);
+            log.error("Failed to send email to {}", email, e);
             throw new EmailSendException(email, e);
         }
+    }
+
+    public void sendRegistrationEmail(String to, String s) {
+        
     }
 }

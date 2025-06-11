@@ -1,5 +1,4 @@
-FROM amazoncorretto:17
-ARG JAR_FILE=target/user-core-1.0.0-exec.jar
-WORKDIR /app
+FROM openjdk:17-jdk-slim
+ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-jar","/app.jar"]

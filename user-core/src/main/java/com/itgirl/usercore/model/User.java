@@ -1,11 +1,10 @@
 package com.itgirl.usercore.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -14,9 +13,13 @@ import java.util.UUID;
 @Setter
 public class User {
     @Id
+    @GeneratedValue
     private UUID id;
-    private String name;
-    private String surname;
+
     private String email;
-    private boolean enabled;
+    private String name;
+    private String password;
+    private boolean active;
+    private String activationKey;
+    private Instant createdAt;
 }

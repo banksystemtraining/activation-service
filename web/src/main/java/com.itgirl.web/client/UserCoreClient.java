@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 
 @FeignClient(name = "user-core", url = "${feign.client.user-core.url}")
-public interface UserCoreClientWeb {
+public interface UserCoreClient {
     @PostMapping(value = "/api/users")
     ResponseEntity<Void> createUser(@RequestBody UserCreateRequest userCreateRequest);
 }

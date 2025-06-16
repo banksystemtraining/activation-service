@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: 12345
       POSTGRES_DB: userdb
     ports:
-      - "15432:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U as_user -d userdb"]
+      test: [ "CMD-SHELL", "pg_isready -U as_user -d userdb" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,12 +21,12 @@ services:
 
   user-core-redis:
     image: redis:7
-    container_name: user_core_redis
+    container_name: user-core-redis
     restart: unless-stopped
     ports:
       - "16379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -41,7 +41,7 @@ services:
     ports:
       - "26379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -87,7 +87,7 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list" ]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -103,14 +103,15 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./user-core/src/main/resources/db/changelog:/liquibase/changelog
-    environment:
-      LIQUIBASE_DRIVER: org.postgresql.Driver
-      LIQUIBASE_URL: jdbc:postgresql://postgres:5432/userdb
-      LIQUIBASE_USERNAME: as_user
-      LIQUIBASE_PASSWORD: 12345
-      LIQUIBASE_CHANGELOG_FILE: changelog-master.xml
-      LIQUIBASE_CONTEXTS: dev
+      - ./user-core/src/main/resources/db:/liquibase/db
+    command:
+      - --changeLogFile=db/changelog/changelog-master.xml
+      - --url=jdbc:postgresql://postgres:5432/userdb
+      - --username=as_user
+      - --password=12345
+      - --contexts=dev
+      - --log-level=INFO
+      - update
     networks:
       - backend
 
@@ -120,7 +121,7 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     ports:
-      - "18081:8081"
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -131,18 +132,28 @@ services:
       liquibase:
         condition: service_completed_successfully
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 0" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/actuator/health/liveness && curl -f http://localhost:8081/actuator/health/readiness" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s
+      start_period: 90s
     environment:
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+      MANAGEMENT_HEALTH_REDIS_ENABLED: "true"
+      MANAGEMENT_HEALTH_DB_ENABLED: "true"
+      MANAGEMENT_HEALTH_KAFKA_ENABLED: "true"
+      MANAGEMENT_HEALTH_KAFKA_TIMEOUT: "5000"
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userdb
       SPRING_REDIS_HOST: user-core-redis
+      SPRING_DATA_REDIS_PORT: 6379
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_PROPERTIES_SESSION_TIMEOUT_MS: "15000"
+      SPRING_LIQUIBASE_ENABLED: "false"
     networks:
       - backend
+      - kafka-net
 
   web:
     build:
@@ -150,37 +161,24 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     ports:
-      - "18082:8082"
+      - "8082:8082"
     depends_on:
       user-core:
         condition: service_healthy
       web-redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 0" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health/liveness && curl -f http://localhost:8082/actuator/health/readiness" ]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 2m
+      retries: 3
+      start_period: 90s
     environment:
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_HEALTH_REDIS_ENABLED: "true"
       SPRING_PROFILES_ACTIVE: dev
       SPRING_REDIS_HOST: web-redis
       USER_SERVICE_URL: http://user-core:8081
-    networks:
-      - backend
-
-  notification-redis:
-    image: redis:7
-    container_name: notification_redis
-    restart: unless-stopped
-    ports:
-      - "36379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
     networks:
       - backend
 
@@ -190,19 +188,19 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     ports:
-      - "18083:8083"
+      - "8083:8083"
     depends_on:
       kafka:
         condition: service_healthy
-      notification-redis:
-        condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 0" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health/liveness && curl -f http://localhost:8083/actuator/health/readiness" ]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 2m
+      retries: 3
+      start_period: 60s
     environment:
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_HEALTH_KAFKA_ENABLED: "true"
       SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     networks:

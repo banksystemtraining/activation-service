@@ -2,7 +2,7 @@ package com.itgirl.usercore.service;
 
 import com.itgirl.common.ActivationMessage;
 import com.itgirl.usercore.dto.UserCreateRequest;
-import com.itgirl.usercore.exception.EmailAlreadyExistsException;
+import com.itgirl.usercore.exception.*;
 import com.itgirl.usercore.kafka.ActivationProducer;
 import com.itgirl.usercore.model.Outbox;
 import com.itgirl.usercore.model.User;
@@ -15,6 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final OutboxRepository outboxRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    private final RedisTemplate <String, UUID> redisTemplate;
+    private final RedisTemplate<String, UUID> redisTemplate;
     private final ActivationProducer activationProducer;
 
     @Transactional
@@ -49,7 +50,40 @@ public class UserService {
         outboxRepository.save(outbox);
 
         String activationKeyToString = activationKey.toString();
-        redisTemplate.opsForValue().set(activationKeyToString,id);
+        redisTemplate.opsForValue().set(activationKeyToString, id, 1, TimeUnit.HOURS);
+
+        //здесь нужно организовать ActivationMessage для kafka
+        //  и вставить activationProducer.sendActivationMessage(message);
+        // я так думаю :)
+    }
+
+    @Transactional
+    public void activateUser(String activationKey) {
+        //здесь будет получение activationKey из строки запроса
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(activationKey))) {
+            throw new ActivationKeyNotFoundException("Activation key not found: timeout.");
+        }
+
+        UUID id = redisTemplate.opsForValue().get(activationKey);
+
+        if (id == null) {
+            throw new InvalidActivationDataException("Invalid activation data detected.");
+        }
+
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found."));
+
+        if (user.isActive()) {
+            throw new UserAlreadyActivatedException("User already activated.");
+        }
+
+        user.setActive(true);
+        userRepository.save(user);
+
+        try {
+            redisTemplate.delete(activationKey);
+        } catch (Exception e) {
+            throw new RedisOperationException("Failed to complete activation process", e);
+        }
     }
 
 

@@ -1,6 +1,6 @@
 package com.itgirl.web.service;
 
-import com.itgirl.web.client.UserCoreClientWeb;
+import com.itgirl.web.client.UserCoreClient;
 import com.itgirl.web.dto.RegistrationRequest;
 import com.itgirl.web.dto.UserCreateRequest;
 import com.itgirl.web.exception.ValidationException;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RegistrationService {
-    private final UserCoreClientWeb userCoreClientWeb;
+    private final UserCoreClient userCoreClientWeb;
     private final RegistrationValidator registrationValidator;
 
     public void register(RegistrationRequest registrationRequest, BindingResult bindingResult) throws ValidatorException {

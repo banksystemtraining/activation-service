@@ -1,25 +1,41 @@
 package com.itgirl.usercore.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Entity
-@Table(name = "users")
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Getter
 @Setter
+@Entity
+@Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue
+    @Column(name = "id", nullable = false, columnDefinition = "UUID")
     private UUID id;
 
-    private String email;
+    @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "surname", nullable = false)
+    private String surname;
+
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
+
+    @Column(name = "password", nullable = false)
     private String password;
+
+    @Column(name = "active", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean active;
-    private String activationKey;
-    private Instant createdAt;
+
+    @CreationTimestamp
+    @Column(name = "created", updatable = false, columnDefinition = "TIMESTAMPTZ")
+    private Instant created;
 }

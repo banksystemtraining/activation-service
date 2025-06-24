@@ -22,6 +22,7 @@ public class NotificationSender {
     }
 
     public void sendRegistrationEmail(ActivationMessage message) {
+        System.out.println("📬 Sending email to: " + message.getEmail());
         String activationUrl = "https://yourapp.com/activate?key=" + message.getActivationKey();
         String content = "Welcome " + message.getName() + "! Click the link to activate your account:\n" + activationUrl;
         sendEmail(message.getEmail(), "Activate your account", content);
@@ -40,9 +41,5 @@ public class NotificationSender {
             log.error("Failed to send email to {}", email, e);
             throw new EmailSendException(email, e);
         }
-    }
-
-    public void sendRegistrationEmail(String to, String s) {
-        
     }
 }

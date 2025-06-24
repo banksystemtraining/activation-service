@@ -10,5 +10,5 @@ public class UserDto {
     private String name;
     private String surname;
     private String email;
-    private String status;
+    private boolean active;
 }

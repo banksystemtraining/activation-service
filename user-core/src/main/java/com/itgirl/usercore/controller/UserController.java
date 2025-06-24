@@ -4,10 +4,7 @@ import com.itgirl.usercore.dto.UserCreateRequest;
 import com.itgirl.usercore.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
 
 @RestController
@@ -20,5 +17,11 @@ public class UserController {
     public ResponseEntity<Void> createUser (@RequestBody UserCreateRequest userCreateRequest){
         userService.createUser(userCreateRequest);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/activate")
+    public ResponseEntity<String> activate(@RequestParam String key) {
+        userService.activateUser(key);
+        return ResponseEntity.ok("Activation successful");
     }
 }

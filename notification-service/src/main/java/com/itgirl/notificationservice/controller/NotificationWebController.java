@@ -30,18 +30,20 @@ public class NotificationWebController {
             logs = emailLogService.getSortedLogs();
         } else {
             logs = emailLogService.searchLogs(search);
+            model.addAttribute("search", search);
         }
 
         int totalLogs = logs.size();
-        int totalPages = (int) Math.ceil((double) totalLogs / PAGE_SIZE);
+        int totalPages = totalLogs > 0 ? (int) Math.ceil((double) totalLogs / PAGE_SIZE) : 1;
 
-        if (page < 1) page = 1;
-        if (page > totalPages) page = totalPages;
+        page = Math.max(1, Math.min(page, totalPages));
 
         int start = (page - 1) * PAGE_SIZE;
         int end = Math.min(start + PAGE_SIZE, totalLogs);
 
-        List<String> pageLogs = (totalLogs > 0 && start < end) ? logs.subList(start, end) : Collections.emptyList();
+        List<String> pageLogs = (totalLogs > 0 && start < end)
+                ? logs.subList(start, end)
+                : Collections.emptyList();
 
         if (pageLogs.isEmpty()) {
             model.addAttribute("message", "No emails found for your query.");
@@ -50,6 +52,7 @@ public class NotificationWebController {
         model.addAttribute("emails", pageLogs);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
+        model.addAttribute("search", search);
 
         return "emails";
     }

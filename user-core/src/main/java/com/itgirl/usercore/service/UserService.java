@@ -4,7 +4,6 @@ import com.itgirl.common.ActivationMessage;
 import com.itgirl.usercore.dto.UserCreateRequest;
 import com.itgirl.usercore.exception.*;
 import com.itgirl.usercore.kafka.ActivationProducer;
-import com.itgirl.usercore.model.Outbox;
 import com.itgirl.usercore.model.User;
 import com.itgirl.usercore.repository.OutboxRepository;
 import com.itgirl.usercore.repository.UserRepository;
@@ -32,34 +31,31 @@ public class UserService {
         if (userRepository.existsByEmail(userCreateRequest.email())) {
             throw new EmailAlreadyExistsException("Email " + userCreateRequest.email() + " already exists.");
         }
-        UUID id = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         User user = new User();
-        user.setId(id);
+        user.setId(userId);
         user.setName(userCreateRequest.name());
         user.setSurname(userCreateRequest.surname());
         user.setEmail(userCreateRequest.email());
         user.setPassword(passwordEncoder.encode(userCreateRequest.password()));
-
+        user.setActive(false);
         userRepository.save(user);
 
         UUID activationKey = UUID.randomUUID();
-        Outbox outbox = new Outbox();
-        outbox.setActivationKey(activationKey);
-        outbox.setEmail(userCreateRequest.email());
 
-        outboxRepository.save(outbox);
+        redisTemplate.opsForValue().set(activationKey.toString(), userId, 1, TimeUnit.HOURS);
 
-        String activationKeyToString = activationKey.toString();
-        redisTemplate.opsForValue().set(activationKeyToString, id, 1, TimeUnit.HOURS);
+        ActivationMessage activationMessage = new ActivationMessage(
+                user.getEmail(),
+                user.getName(),
+                activationKey.toString()
+        );
 
-        //здесь нужно организовать ActivationMessage для kafka
-        //  и вставить activationProducer.sendActivationMessage(message);
-        // я так думаю :)
+        activationProducer.saveToOutbox(activationMessage);
     }
 
     @Transactional
     public void activateUser(String activationKey) {
-        //здесь будет получение activationKey из строки запроса
         if (Boolean.FALSE.equals(redisTemplate.hasKey(activationKey))) {
             throw new ActivationKeyNotFoundException("Activation key not found: timeout.");
         }
@@ -85,42 +81,4 @@ public class UserService {
             throw new RedisOperationException("Failed to complete activation process", e);
         }
     }
-
-
-    public void registerUser(String name, String email, String password) {
-
-        String activationKey = UUID.randomUUID().toString();
-
-        ActivationMessage message = new ActivationMessage(
-                email,
-                name,
-                password,
-                activationKey
-        );
-
-        activationProducer.sendActivationMessage(message);
-    }
-//
-//    public void activateUserByKey(String activationKey) {
-//        Optional<User> userOpt = repository.findByActivationKey(activationKey);
-//        if (userOpt.isPresent()) {
-//            User user = userOpt.get();
-//            user.setActive(true);
-//            user.setActivationKey(null); // clear
-//            repository.save(user);
-//        } else {
-//            throw new IllegalArgumentException("Invalid activation key");
-//        }
-//    }
-//
-////    public void saveActivatedUser(ActivationMessage message) {
-//        User user = new User();
-//        user.setEmail(message.getEmail());
-//        user.setName(message.getName());
-//        user.setPassword(passwordEncoder.encode(message.getPassword()));
-//        user.setActivationKey(message.getActivationKey());
-//        user.setActive(false);
-//        user.setCreated(Instant.now());
-//        repository.save(user);
-//    }
 }

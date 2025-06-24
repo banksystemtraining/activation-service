@@ -5,22 +5,40 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
 
-    <changeSet id="create_table_outbox" author="Marina Bondareva">
+    <changeSet id="create_table_outbox" author="Nadezhda Churilo">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="outbox"/>
             </not>
         </preConditions>
         <createTable tableName="outbox">
-            <column name="activation_key" type="UUID">
+            <column name="id" type="UUID">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="email" type="VARCHAR(30)">
-                <constraints nullable="false" unique="true"/>
+            <column name="topic" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="processed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
             </column>
         </createTable>
-        <createIndex tableName="outbox" indexName="idx_outbox_email">
-            <column name="email"/>
+        <createIndex tableName="outbox" indexName="idx_outbox_processed">
+            <column name="processed"/>
         </createIndex>
     </changeSet>
+    <changeSet id="20250624-01" author="Nadezhda Churilo">
+        <addColumn tableName="outbox">
+            <column name="activation_key" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="20250624-02" author="Nadezhda Churilo">
+        <addNotNullConstraint tableName="outbox" columnName="activation_key" columnDataType="varchar(255)"/>
+    </changeSet>
+
 </databaseChangeLog>

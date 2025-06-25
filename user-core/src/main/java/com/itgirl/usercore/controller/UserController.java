@@ -19,9 +19,10 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/activate")
-    public ResponseEntity<String> activate(@RequestParam String key) {
-        userService.activateUser(key);
-        return ResponseEntity.ok("Activation successful");
-    }
+
+//    @GetMapping("/activate")
+//    public ResponseEntity<String> activate(@RequestParam String key) {
+//        userService.activateUser(key);
+//        return ResponseEntity.ok("Activation successful");
+//    }
 }

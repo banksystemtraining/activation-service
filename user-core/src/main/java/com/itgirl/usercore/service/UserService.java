@@ -5,7 +5,6 @@ import com.itgirl.usercore.dto.UserCreateRequest;
 import com.itgirl.usercore.exception.*;
 import com.itgirl.usercore.kafka.ActivationProducer;
 import com.itgirl.usercore.model.User;
-import com.itgirl.usercore.repository.OutboxRepository;
 import com.itgirl.usercore.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final OutboxRepository outboxRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final RedisTemplate<String, UUID> redisTemplate;
     private final ActivationProducer activationProducer;

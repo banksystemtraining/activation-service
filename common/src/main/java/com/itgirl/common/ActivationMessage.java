@@ -10,6 +10,5 @@ import lombok.NoArgsConstructor;
 public class ActivationMessage {
     private String email;
     private String name;
-    private String password;
     private String activationKey;
 }

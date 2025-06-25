@@ -12,10 +12,13 @@ public class RegistrationListener {
 
     private final NotificationSender notificationSender;
 
-    @KafkaListener(topics = "${spring.kafka.topic.register}", groupId = "notification-group", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(
+            topics = "${spring.kafka.topic.register}",
+            groupId = "notification-group",
+            containerFactory = "kafkaListenerContainerFactory"
+    )
     public void handleUserRegistration(ActivationMessage message) {
+        System.out.println("🔥 Received message: " + message);
         notificationSender.sendRegistrationEmail(message);
     }
 }
-
-

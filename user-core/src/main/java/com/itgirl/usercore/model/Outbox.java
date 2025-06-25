@@ -5,18 +5,28 @@ import lombok.*;
 
 import java.util.UUID;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-@Getter
-@Setter
 @Entity
 @Table(name = "outbox")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Outbox {
-    @Id
-    @Column(name = "activation_key", nullable = false, columnDefinition = "UUID")
-    private UUID activationKey;
 
-    @Column(name = "email", nullable = false, unique = true)
-    private String email;
+    @Id
+    @GeneratedValue
+    private UUID id;
+
+    @Column(name = "topic", nullable = false)
+    private String topic;
+
+    @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
+    private String payload;
+
+    @Column(name = "processed", nullable = false)
+    private boolean processed = false;
+
+    @Column(name = "activation_key", nullable = false)
+    private String activationKey;
 }

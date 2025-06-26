@@ -57,6 +57,8 @@ services:
       ZOO_HEAP_SIZE: 1G
     ports:
       - "12181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
     healthcheck:
       test: ["CMD-SHELL", "echo ruok | nc localhost 2181"]
       interval: 10s
@@ -203,8 +205,12 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      SPRING_MAIL_HOST: mailhog
-      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: banksystemtraining@gmail.com
+      SPRING_MAIL_PASSWORD: btbhdffcdjwgbyvo
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: true
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: true
     networks:
       - backend
 
@@ -220,6 +226,7 @@ services:
 volumes:
   pgdata:
   kafka_data:
+  zookeeper_data:
 
 networks:
   backend:

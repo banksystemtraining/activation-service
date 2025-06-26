@@ -14,14 +14,8 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createUser (@RequestBody UserCreateRequest userCreateRequest){
+    public ResponseEntity<Void> createUser(@RequestBody UserCreateRequest userCreateRequest) {
         userService.createUser(userCreateRequest);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/activate")
-    public ResponseEntity<String> activate(@RequestParam String key) {
-        userService.activateUser(key);
-        return ResponseEntity.ok("Activation successful");
     }
 }

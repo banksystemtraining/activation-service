@@ -32,8 +32,9 @@ public class User {
     @Column(name = "password", nullable = false)
     private String password;
 
+    @Builder.Default
     @Column(name = "active", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean active;
+    private boolean active = false;
 
     @CreationTimestamp
     @Column(name = "created", updatable = false, columnDefinition = "TIMESTAMPTZ")

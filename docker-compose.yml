@@ -135,7 +135,7 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     ports:
-      - "8281:8081"
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -167,7 +167,7 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     ports:
-      - "8382:8082"
+      - "8082:8082"
     depends_on:
       user-core:
         condition: service_healthy
@@ -192,7 +192,7 @@ services:
       dockerfile: Dockerfile
     restart: on-failure
     ports:
-      - "8483:8083"
+      - "8083:8083"
     depends_on:
       kafka:
         condition: service_healthy
@@ -226,7 +226,13 @@ services:
 volumes:
   pgdata:
   kafka_data:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
   zookeeper_data:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
 
 networks:
   backend:

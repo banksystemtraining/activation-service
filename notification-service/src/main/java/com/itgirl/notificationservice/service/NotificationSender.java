@@ -2,11 +2,14 @@ package com.itgirl.notificationservice.service;
 
 import com.itgirl.common.ActivationMessage;
 import com.itgirl.notificationservice.log.EmailSendException;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+
 
 @Component
 @RequiredArgsConstructor
@@ -23,21 +26,28 @@ public class NotificationSender {
 
     public void sendRegistrationEmail(ActivationMessage message) {
         System.out.println("📬 Sending email to: " + message.getEmail());
-        String activationUrl = "https://yourapp.com/activate?key=" + message.getActivationKey();
+        String activationUrl = "http://localhost:8082/api/activate?key=" + message.getActivationKey();
         String content = "Welcome " + message.getName() + "! Click the link to activate your account:\n" + activationUrl;
         sendEmail(message.getEmail(), "Activate your account", content);
     }
 
     private void sendEmail(String email, String subject, String content) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject(subject);
-        message.setText(content);
-
         try {
-            mailSender.send(message);
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+            helper.setTo(email);
+            helper.setSubject(subject);
+
+            String htmlContent = content.replaceAll(
+                    "(http://[^\\s]+)",
+                    "<a href=\"$1\">$1</a>"
+            );
+
+            htmlContent = htmlContent.replaceAll("\n", "<br>");
+            helper.setText(htmlContent, true);
+            mailSender.send(mimeMessage);
             emailLogService.logEmail(email, content);
-        } catch (Exception e) {
+        } catch (MessagingException e) {
             log.error("Failed to send email to {}", email, e);
             throw new EmailSendException(email, e);
         }

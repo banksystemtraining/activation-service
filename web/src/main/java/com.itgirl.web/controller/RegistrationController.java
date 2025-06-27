@@ -29,8 +29,13 @@ public class RegistrationController {
     }
 
     @GetMapping("/activate")
-    public ResponseEntity<String> activate(@RequestParam String key) {
-        userCoreClient.activateUser(key);
-        return ResponseEntity.ok("Activation successful");
+    public ResponseEntity<?> activate(@RequestParam String key) {
+        try {
+            userCoreClient.activateUser(key);
+            return ResponseEntity.ok("Account activated successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Activation failed: " + e.getMessage());
+        }
     }
 }

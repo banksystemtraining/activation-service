@@ -24,7 +24,8 @@ public class Outbox {
     @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
     private String payload;
 
-    @Column(name = "processed", nullable = false)
+    @Builder.Default
+    @Column(name = "processed", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean processed = false;
 
     @Column(name = "activation_key", nullable = false)

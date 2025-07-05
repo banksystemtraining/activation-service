@@ -35,7 +35,7 @@ services:
 
   web-redis:
     image: redis:7
-    container_name: web_redis
+    container_name: web-redis
     restart: unless-stopped
     ports:
       - "26379:6379"

@@ -1,6 +1,7 @@
 package com.itgirl.usercore.service;
 
 import com.itgirl.common.ActivationMessage;
+import com.itgirl.usercore.dto.AuthenticationRequest;
 import com.itgirl.usercore.dto.UserCreateRequest;
 import com.itgirl.usercore.exception.*;
 import com.itgirl.usercore.kafka.ActivationProducer;
@@ -8,6 +9,7 @@ import com.itgirl.usercore.model.User;
 import com.itgirl.usercore.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -78,5 +81,13 @@ public class UserService {
         } catch (Exception e) {
             throw new RedisOperationException("Failed to complete activation process", e);
         }
+    }
+
+    public User authUser(AuthenticationRequest authenticationRequest) {
+        User authUser = userRepository.findByEmail(authenticationRequest.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
+        if (!passwordEncoder.matches(authenticationRequest.getPassword(), authUser.getPassword())) {
+            throw new RuntimeException("Wrong password");
+        }
+        return authUser;
     }
 }
